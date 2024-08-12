@@ -11,6 +11,8 @@ class Game(Base):
     __tablename__ = "games"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    theme: Mapped[str] = mapped_column(default='')
     companies: Mapped[List["Company"]] = relationship(back_populates='game')
 
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
@@ -45,9 +47,10 @@ class Event(Base):
 
 def create_game(
     db: Session,
+    theme: str,
     companies: List[Company],
 ) -> Game:
-    game = Game(companies=companies)
+    game = Game(theme=theme, companies=companies)
     db.add(game)
     db.commit()
     db.refresh(game)

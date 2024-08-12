@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List
+from typing import List
 import base64
 from io import BytesIO
 
@@ -11,8 +11,11 @@ from PIL import Image
 
 
 COMPANY_PROMPT = ''''Create me 5 imaginary companies with very short descriptions.
+Theme: {theme}
 You can go wild! Come up with some fun concepts! All response in korean
-Format should in in JSON
+Format should in in JSON:'''
+
+COMPANY_PROMPT_FORMAT = '''
 {
     "companies": [{
         "name": Name of the company,
@@ -47,13 +50,13 @@ class GameService:
         )
         self.gpt_model = gpt_model
     
-    def get_companies(self) -> List[Company]:
+    def get_companies(self, theme: str) -> List[Company]:
         resp = self.openai_client.chat.completions.create(
             model=self.gpt_model,
             messages=[
                 {
                     'role': 'user',
-                    'content': COMPANY_PROMPT,
+                    'content': COMPANY_PROMPT.format(theme=theme) + COMPANY_PROMPT_FORMAT,
                 }
             ],
             response_format={"type": "json_object"},

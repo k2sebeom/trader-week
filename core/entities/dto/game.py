@@ -16,4 +16,9 @@ class CompanyDTO(BaseModel):
 
 class GameDTO(BaseModel):
     id: int
+    theme: str
     companies: List[CompanyDTO]
+
+
+class CreateGameDTO(BaseModel):
+    theme: str
