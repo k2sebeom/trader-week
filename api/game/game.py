@@ -44,6 +44,10 @@ async def post_new_event(id: int, db = Depends(get_db)) -> GameDTO:
     game = get_game_by_id(db, id)
     if game is None:
         raise HTTPException(404, 'Game not found')
+    
+    if len(game.companies[0].events) == 7:
+        raise HTTPException(400, "No more events allowed")
+
     events = game_service.create_new_events(game.companies)
     create_events(db, events)
     game = get_game_by_id(db, id)
