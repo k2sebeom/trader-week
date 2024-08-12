@@ -8,6 +8,8 @@ uvicorn = "*"
 fastapi = "*"
 python-dotenv = "*"
 openai = "*"
+pydantic-settings = "*"
+pillow = "*"
 
 [dev-packages]
 
