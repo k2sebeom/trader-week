@@ -14,7 +14,7 @@ class Game(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     companies: Mapped[List["Company"]] = relationship(back_populates='game')
 
-    created_at: Mapped[DateTime] = mapped_column(default=datetime.now)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
 
 class Company(Base):
