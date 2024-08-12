@@ -1,9 +1,8 @@
-from typing import List
+from typing import List, Optional
 
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, exists
 from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 
-from app.services.game_service import Company as CompanyModel
 from core.entities.schema.db import Base
 from datetime import datetime
 
@@ -37,24 +36,37 @@ class Event(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     day: Mapped[int] = mapped_column()
 
+    description: Mapped[str] = mapped_column()
+    price: Mapped[int] = mapped_column()
+
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     company: Mapped["Company"] = relationship(back_populates="events")
 
 
 def create_game(
     db: Session,
-    companies: List[CompanyModel],
+    companies: List[Company],
 ) -> Game:
-    game = Game()
-    game.companies = []
-    for c in companies:
-        comp = Company()
-        comp.name = c.name
-        comp.description = c.description
-        comp.price = c.price
-        game.companies.append(comp)
-
+    game = Game(companies=companies)
     db.add(game)
     db.commit()
     db.refresh(game)
     return game
+
+def create_events(
+    db: Session,
+    events: List[Event],
+) -> Game:
+    for e in events:
+        db.add(e)
+    db.commit()
+    return events
+
+def get_game_by_id(
+        db: Session,
+        id: int
+    ) -> Optional[Game]:
+    if db.query(exists(Game).where(Game.id == id)).scalar():
+        return db.query(Game).where(Game.id == id).scalar()
+    else:
+        return None
