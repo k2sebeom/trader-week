@@ -5,9 +5,10 @@ from core.config import config
 def main():
     uvicorn.run(
         app='app.server:app',
-        host='0.0.0.0',
+        host='127.0.0.1',
         port=config.port,
-        workers=3,
+        reload=True,
+        workers=1,
     )
 
 
