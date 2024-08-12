@@ -12,6 +12,8 @@ class Config(BaseSettings):
     port: int = os.getenv('PORT') or 8080
 
     openai_key: str = os.getenv('OPENAI_KEY') or ''
+    
+    database_url: str = os.getenv('DATABASE_URL') or 'postgresql://localhost:5432'
 
 
 config: Config = Config()
