@@ -19,6 +19,7 @@ def game_to_dto(game: Game) -> GameDTO:
                 name=c.name,
                 description=c.description,
                 price=c.price,
+                thumbnail=c.thumbnail,
                 events=[
                     EventDTO(
                         id=e.id,
@@ -35,7 +36,7 @@ def game_to_dto(game: Game) -> GameDTO:
 
 @game_router.post("/")
 async def post_new_game(req: CreateGameDTO, db = Depends(get_db)) -> GameDTO:
-    companies = game_service.get_companies(theme=req.theme)
+    companies = await game_service.get_companies(theme=req.theme)
     game = create_game(db, req.theme, companies)
     return game_to_dto(game)
 
@@ -49,7 +50,7 @@ async def post_new_event(id: int, db = Depends(get_db)) -> GameDTO:
     if len(game.companies[0].events) == 7:
         raise HTTPException(400, "No more events allowed")
 
-    events = game_service.create_new_events(game.companies)
+    events = await game_service.create_new_events(game.companies)
     create_events(db, events)
     game = get_game_by_id(db, id)
     return game_to_dto(game)

@@ -1,9 +1,12 @@
 import json
+import os
+import asyncio
 from typing import List
+from uuid import uuid1
 import base64
 from io import BytesIO
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from core.entities.schema.game import Event, Company
 from core.config import config
@@ -45,13 +48,13 @@ EVENT_PROMPT_FORMAT = '''
 
 class GameService:
     def __init__(self, gpt_model: str = 'gpt-4o'):
-        self.openai_client = OpenAI(
+        self.openai_client = AsyncOpenAI(
             api_key=config.openai_key,
         )
         self.gpt_model = gpt_model
     
-    def get_companies(self, theme: str) -> List[Company]:
-        resp = self.openai_client.chat.completions.create(
+    async def get_companies(self, theme: str) -> List[Company]:
+        resp = await self.openai_client.chat.completions.create(
             model=self.gpt_model,
             messages=[
                 {
@@ -62,27 +65,42 @@ class GameService:
             response_format={"type": "json_object"},
         )
         data = json.loads(resp.choices[0].message.content)
-        return [
+        companies = [
             Company(
                 name=c['name'],
                 description=c['description'],
                 price=c['price'],
             ) for c in data['companies']
         ]
+        files = await self.get_companies_thumbnail(companies)
+        for i in range(len(companies)):
+            companies[i].thumbnail = files[i]
+        return companies
 
-    def get_company_thumbnail(self, company: Company):
-        resp = self.openai_client.images.generate(
-            prompt=f'Create me an image thumbnail for the following company. Name: {company.name}, Desc: {company.description}',
-            model='dall-e-3',
-            size='1024x1024',
-            response_format='b64_json',
-        )
-        b64_json = resp.data[0].b64_json
-        data = base64.b64decode(b64_json)
-        img = Image.open(BytesIO(data))
-        img.save(f'{company.name}.jpg', 'JPEG')
+    async def get_companies_thumbnail(self, companies: List[Company]):
+        tasks = []
+        for c in companies:
+            task = self.openai_client.images.generate(
+                prompt=f'Create me an image thumbnail for the following company. Name: {c.name}, Desc: {c.description}',
+                model='dall-e-3',
+                size='1024x1024',
+                response_format='b64_json',
+            )
+            tasks.append(task)
+        
+        results = await asyncio.gather(*tasks)
+        files = []
+        for resp in results:
+            b64_json = resp.data[0].b64_json
+            data = base64.b64decode(b64_json)
+            img = Image.open(BytesIO(data))
+            fname = f'{uuid1()}.jpg'
+            fpath = os.path.join(config.thumbnails_path, fname)
+            img.save(fpath, 'JPEG')
+            files.append(fname)
+        return files
 
-    def create_new_events(self, companies: List[Company]) -> List[Event]:
+    async def create_new_events(self, companies: List[Company]) -> List[Event]:
         companies_prompt = ''
         for c in companies:
             companies_prompt += f'{c.name} ({c.price} Gold): {c.description}\n'
@@ -117,7 +135,7 @@ class GameService:
             'content': f'Day {curr_day}'
         })
         
-        resp = self.openai_client.chat.completions.create(
+        resp = await self.openai_client.chat.completions.create(
             model=self.gpt_model,
             messages=messages,
             response_format={"type": "json_object"},

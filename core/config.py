@@ -15,5 +15,6 @@ class Config(BaseSettings):
     
     database_url: str = os.getenv('DATABASE_URL') or 'postgresql://localhost:5432'
 
+    thumbnails_path: str = os.getenv('THUMBNAILS_PATH') or 'thumbnails'
 
 config: Config = Config()

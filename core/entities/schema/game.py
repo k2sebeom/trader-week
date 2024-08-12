@@ -25,6 +25,8 @@ class Company(Base):
     game_id: Mapped[int] = mapped_column(ForeignKey("games.id"))
     game: Mapped["Game"] = relationship(back_populates="companies")
 
+    thumbnail: Mapped[str] = mapped_column(String)
+
     name = mapped_column(String)
     description = mapped_column(String)
     price: Mapped[int] = mapped_column()

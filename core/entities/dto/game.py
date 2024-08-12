@@ -12,6 +12,7 @@ class CompanyDTO(BaseModel):
     name: str
     description: str
     price: int
+    thumbnail: str
     events: List[EventDTO]
 
 class GameDTO(BaseModel):

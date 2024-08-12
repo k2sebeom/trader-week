@@ -3,12 +3,20 @@ from typing import List
 from fastapi import FastAPI
 from fastapi.middleware import Middleware
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from api import router
+from core.config import config
 
 
 def init_routers(app_: FastAPI) -> None:
     app_.include_router(router)
+
+    app_.mount(
+        '/thumbnails',
+        StaticFiles(directory=config.thumbnails_path),
+        name='thumbnails'
+    )
 
 
 def make_middleware() -> List[Middleware]:
