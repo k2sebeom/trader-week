@@ -6,9 +6,7 @@ from core.config import config
 
 
 engine = create_engine(
-    config.database_url, connect_args={
-        'check_same_thread': False,
-    }
+    config.database_url,
 )
 
 SessionLocal = sessionmaker(
@@ -21,3 +19,11 @@ Base = declarative_base()
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

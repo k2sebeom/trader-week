@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import Integer, String, DateTime, ForeignKey
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 
 from app.services.game_service import Company as CompanyModel
@@ -46,6 +46,14 @@ def create_game(
     companies: List[CompanyModel],
 ) -> Game:
     game = Game()
+    game.companies = []
+    for c in companies:
+        comp = Company()
+        comp.name = c.name
+        comp.description = c.description
+        comp.price = c.price
+        game.companies.append(comp)
+
     db.add(game)
     db.commit()
     db.refresh(game)
