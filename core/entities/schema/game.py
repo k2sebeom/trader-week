@@ -141,3 +141,12 @@ def get_or_create_user(
         db.commit()
         db.refresh(new_user)
         return new_user
+
+def get_user_by_id(
+        db: Session,
+        id: int
+    ) -> Optional[Game]:
+    if db.query(exists(User).where(User.id == id)).scalar():
+        return db.query(User).where(User.id == id).scalar()
+    else:
+        return None

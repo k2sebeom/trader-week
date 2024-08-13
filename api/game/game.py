@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
+from typing import Annotated, Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Cookie
 from sqlalchemy.orm import Session
 
 from app.services.game_service import GameService
 from core.entities.schema.db import get_db
-from core.entities.schema.game import create_game, get_game_by_id, create_events, Game
-from core.entities.dto.game import GameDTO, CompanyDTO, EventDTO, CreateGameDTO
+from core.entities.schema.game import create_game, get_game_by_id, create_events, Game, get_user_by_id
+from core.entities.dto.game import GameDTO, CompanyDTO, EventDTO, CreateGameDTO, UserDTO
 
 game_router = APIRouter(prefix='/game')
 
@@ -31,10 +32,18 @@ def game_to_dto(game: Game) -> GameDTO:
                         price=e.price,
                     )
                     for e in filter(lambda e: (e.happen_at - now) < timedelta(seconds=0), c.events)
-                ]
+                ],
             )
             for c in game.companies
-        ]
+        ],
+        users=[
+            UserDTO(
+                nickname=user.nickname,
+                id=user.id,
+                gold=user.gold,
+            )
+            for user in game.users
+        ],
     )
 
 
@@ -69,5 +78,19 @@ async def start_game(id: int, db: Session = Depends(get_db)) -> GameDTO:
     for c in game.companies:
         for i, e in enumerate(c.events):
             e.happen_at = now + timedelta(minutes=i * 2)
+    db.commit()
+    return game_to_dto(game)
+
+
+@game_router.put("/{id}/join")
+async def join_game(id: int, db: Session = Depends(get_db), user_id: Annotated[Union[int, None], Cookie()] = None) -> GameDTO:
+    if user_id is None:
+        raise HTTPException(401, 'Not signed in')
+    user = get_user_by_id(db, user_id)
+    if user is None:
+        raise HTTPException(401, 'Not signed in')
+
+    game = get_game_by_id(db, id)
+    game.users.append(user)
     db.commit()
     return game_to_dto(game)
