@@ -1,8 +1,8 @@
 """Add user and trade table
 
-Revision ID: b4047697b7ce
+Revision ID: d3f33479514e
 Revises: 2aad933246c3
-Create Date: 2024-08-13 15:06:05.338217
+Create Date: 2024-08-13 15:21:08.653883
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'b4047697b7ce'
+revision: str = 'd3f33479514e'
 down_revision: Union[str, None] = '2aad933246c3'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -38,9 +38,11 @@ def upgrade() -> None:
     op.create_table('trades',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('game_id', sa.Integer(), nullable=False),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('amount', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ),
+    sa.ForeignKeyConstraint(['game_id'], ['games.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

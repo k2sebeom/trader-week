@@ -71,4 +71,3 @@ async def start_game(id: int, db: Session = Depends(get_db)) -> GameDTO:
             e.happen_at = now + timedelta(minutes=i * 2)
     db.commit()
     return game_to_dto(game)
-

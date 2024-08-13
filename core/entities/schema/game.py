@@ -2,9 +2,12 @@ from typing import List, Optional
 
 from sqlalchemy import String, ForeignKey, exists, Table, Column
 from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
+import bcrypt
 
 from core.entities.schema.db import Base
 from datetime import datetime, timedelta
+
+INITIAL_GOLD = 10_000
 
 # For User - Game association
 association_table = Table(
@@ -81,6 +84,7 @@ class Trade(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
+    game_id: Mapped[int] = mapped_column(ForeignKey("games.id"))
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     amount: Mapped[int] = mapped_column()
 
@@ -115,3 +119,25 @@ def get_game_by_id(
         return db.query(Game).where(Game.id == id).scalar()
     else:
         return None
+
+def get_or_create_user(
+        db: Session,
+        nickname: str,
+        password: str,
+    ) -> Optional[User]:
+    if db.query(exists(User)).where(User.nickname == nickname).scalar():
+        user: User = db.query(User).where(User.nickname == nickname).scalar()
+        if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+            return user
+        return None
+    else:
+        hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        new_user = User(
+            nickname=nickname,
+            password=hash.decode('utf-8'),
+            gold=INITIAL_GOLD,
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user

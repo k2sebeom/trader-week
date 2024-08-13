@@ -12,6 +12,7 @@ pydantic-settings = "*"
 pillow = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
+bcrypt = "*"
 
 [dev-packages]
 alembic = "*"
