@@ -147,6 +147,10 @@ async def make_trade(id: int, req: CreateTradeDTO, db: Session = Depends(get_db)
         raise HTTPException(403, 'Not allowed to make trade in this game')
 
     events = filter_events(game.companies[0].events)
+
+    if datetime.now() - events[-1].happen_at > timedelta(seconds=115):
+        raise HTTPException(403, 'Market closed')
+
     curr_day = len(events) + 1
     trades = []
     curr_gold = user.gold
