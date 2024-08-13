@@ -68,6 +68,7 @@ async def start_game(id: int, db: Session = Depends(get_db)) -> GameDTO:
     game.started_at = now
     for c in game.companies:
         for i, e in enumerate(c.events):
-            e.happen_at = now + timedelta(minutes=i)
+            e.happen_at = now + timedelta(minutes=i * 2)
     db.commit()
     return game_to_dto(game)
+

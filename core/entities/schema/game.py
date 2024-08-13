@@ -1,11 +1,18 @@
 from typing import List, Optional
 
-from sqlalchemy import String, ForeignKey, exists
+from sqlalchemy import String, ForeignKey, exists, Table, Column
 from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 
 from core.entities.schema.db import Base
 from datetime import datetime, timedelta
 
+# For User - Game association
+association_table = Table(
+    "users_games",
+    Base.metadata,
+    Column("left_id", ForeignKey("users.id"), primary_key=True),
+    Column("right_id", ForeignKey("games.id"), primary_key=True),
+)
 
 class Game(Base):
     __tablename__ = "games"
@@ -14,6 +21,11 @@ class Game(Base):
 
     theme: Mapped[str] = mapped_column(default='')
     companies: Mapped[List["Company"]] = relationship(back_populates='game')
+
+    users: Mapped[List["User"]] = relationship(
+        secondary=association_table, back_populates="games",
+    )
+    trades: Mapped[List["Trade"]] = relationship()
 
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     started_at: Mapped[datetime] = mapped_column(nullable=True)
@@ -48,6 +60,29 @@ class Event(Base):
 
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     company: Mapped["Company"] = relationship(back_populates="events")
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    nickname: Mapped[str] = mapped_column(unique=True)
+    password: Mapped[str] = mapped_column()
+
+    gold: Mapped[int] = mapped_column()
+    games: Mapped[List["Game"]] = relationship(
+        secondary=association_table, back_populates="users",
+    )
+
+
+class Trade(Base):
+    __tablename__ = "trades"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    amount: Mapped[int] = mapped_column()
 
 
 def create_game(
