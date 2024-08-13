@@ -65,10 +65,16 @@ async def get_game(id: int, db = Depends(get_db)) -> GameDTO:
 
 
 @game_router.put("/{id}/start")
-async def start_game(id: int, db: Session = Depends(get_db)) -> GameDTO:
+async def start_game(id: int, db: Session = Depends(get_db), user_id: Annotated[Union[int, None], Cookie()] = None) -> GameDTO:
+    if user_id is None:
+        raise HTTPException(401, 'Not signed in')
+    
     game = get_game_by_id(db, id)
     if game is None:
         raise HTTPException(404, 'Game not found')
+
+    if len(game.users) == 0 or game.users[0].id != user_id:
+        raise HTTPException(401, 'Not authorized to start the game')
 
     if game.started_at is not None:
         raise HTTPException(400, f'Game {id} already started at {game.started_at}')
@@ -92,5 +98,19 @@ async def join_game(id: int, db: Session = Depends(get_db), user_id: Annotated[U
 
     game = get_game_by_id(db, id)
     game.users.append(user)
+    db.commit()
+    return game_to_dto(game)
+
+
+@game_router.delete("/{id}/leave")
+async def join_game(id: int, db: Session = Depends(get_db), user_id: Annotated[Union[int, None], Cookie()] = None) -> GameDTO:
+    if user_id is None:
+        raise HTTPException(401, 'Not signed in')
+    user = get_user_by_id(db, user_id)
+    if user is None:
+        raise HTTPException(401, 'Not signed in')
+
+    game = get_game_by_id(db, id)
+    game.users.remove(user)
     db.commit()
     return game_to_dto(game)
