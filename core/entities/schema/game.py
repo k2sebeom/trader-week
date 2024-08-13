@@ -90,6 +90,13 @@ class Trade(Base):
     day: Mapped[int] = mapped_column()
     amount: Mapped[int] = mapped_column()
 
+def get_all_games(db: Session) -> List[Game]:
+    return db.query(Game).where(Game.started_at == None).order_by(Game.created_at.desc()).all()
+
+def get_last_game(
+    db: Session,  
+) -> Optional[Game]:
+    return db.query(Game).order_by(Game.created_at.desc()).limit(1).scalar()
 
 def create_game(
     db: Session,
@@ -106,7 +113,7 @@ def create_events(
     db: Session,
     events: List[Event],
 ) -> Game:
-    open_at = datetime.now() + timedelta(hours=1)
+    open_at = datetime.now() + timedelta(days=1)
     for e in events:
         e.happen_at = open_at
         db.add(e)

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.services.game_service import GameService
 from core.entities.schema.db import get_db
-from core.entities.schema.game import create_game, get_game_by_id, create_events, Game, get_user_by_id
+from core.entities.schema.game import create_game, get_game_by_id, create_events, Game, get_user_by_id, get_last_game, get_all_games
 from core.entities.schema.game import Trade, create_trades, Event
 from core.entities.dto.game import GameDTO, CompanyDTO, EventDTO, CreateGameDTO, UserDTO
 from core.entities.dto.game import CreateTradeDTO, TradeDTO
@@ -61,13 +61,32 @@ def game_to_dto(game: Game) -> GameDTO:
 
 
 @game_router.post("/")
-async def post_new_game(req: CreateGameDTO, db = Depends(get_db)) -> GameDTO:
+async def post_new_game(req: CreateGameDTO, db: Session = Depends(get_db), user_id: Annotated[Union[int, None], Cookie()] = None) -> GameDTO:
+    if user_id is None:
+        raise HTTPException(401, 'Not signed in')
+    user = get_user_by_id(db, user_id)
+    if user is None:
+        raise HTTPException(401, 'Not signed in')
+    
+    game = get_last_game(db)
+    if game is not None and datetime.now() - game.created_at < timedelta(minutes=2):
+        raise HTTPException(400, 'New Game can be only created per minute')
+    
     companies = await game_service.get_companies(theme=req.theme)
     game = create_game(db, req.theme, companies)
 
     events = await game_service.create_new_events(game.companies)
     create_events(db, events)
+    game.users.append(user)
+    db.commit()
     return game_to_dto(game)
+
+
+@game_router.get('/')
+def get_games(db = Depends(get_db)) -> List[GameDTO]:
+    games = get_all_games(db)
+    return [game_to_dto(game) for game in games]
+
 
 @game_router.get("/{id}")
 async def get_game(id: int, db = Depends(get_db)) -> GameDTO:
@@ -110,6 +129,11 @@ async def join_game(id: int, db: Session = Depends(get_db), user_id: Annotated[U
         raise HTTPException(401, 'Not signed in')
 
     game = get_game_by_id(db, id)
+    if game is None:
+        raise HTTPException(404, f'Game with id {id} not found')
+    if game.started_at is not None:
+        raise HTTPException(403, 'Cannot join started game')
+    
     game.users.append(user)
     db.commit()
     return game_to_dto(game)
