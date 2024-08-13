@@ -34,8 +34,8 @@ def make_middleware() -> List[Middleware]:
 
 def create_app() -> FastAPI:
     app_ = FastAPI(
-        title="Example App on FastAPI",
-        description="Example API",
+        title="Trader Week API",
+        description="API for Trader Week Web Game",
         version="0.1.0",
         docs_url="/docs",
         middleware=make_middleware(),
