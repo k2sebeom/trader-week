@@ -105,8 +105,6 @@ class GameService:
         for c in companies:
             companies_prompt += f'{c.name} ({c.price} Gold): {c.description}\n'
 
-        curr_day = len(companies[0].events) + 1
-
         event_prompt = EVENT_PROMPT.format(
             companies=companies_prompt,
         ) + EVENT_PROMPT_FORMAT
@@ -115,38 +113,28 @@ class GameService:
             'role': 'user',
             'content': event_prompt
         }]
-        for d in range(len(companies[0].events)):
+        events: List[Event] = []
+
+        for d in range(7):
             messages.append({
                 'role': 'user',
                 'content': f'Day {d + 1}'
             })
-            messages.append({
-                'role': 'assistant',
-                'content': json.dumps({
-                    "events": [{
-                        "company": c.name,
-                        "description": c.events[d].description,
-                        "price": c.events[d].price,
-                    } for c in companies]
-                }, ensure_ascii=False, indent=2)
-            })
-        messages.append({
-            'role': 'user',
-            'content': f'Day {curr_day}'
-        })
-        
-        resp = await self.openai_client.chat.completions.create(
-            model=self.gpt_model,
-            messages=messages,
-            response_format={"type": "json_object"},
-        )
-        data = json.loads(resp.choices[0].message.content)
-        return [
-            Event(
-                day=curr_day,
-                company_id=companies[i].id,
-                description=e['description'],
-                price=e['price'],
+            resp = await self.openai_client.chat.completions.create(
+                model=self.gpt_model,
+                messages=messages,
+                response_format={"type": "json_object"},
             )
-            for i, e in enumerate(data['events'])
-        ]
+            msg = resp.choices[0].message
+            data = json.loads(msg.content)
+            for i, e in enumerate(data['events']):
+                events.append(
+                    Event(
+                        day=d + 1,
+                        company_id=companies[i].id,
+                        description=e['description'],
+                        price=e['price'],
+                    )
+                )
+            messages.append(msg)
+        return events

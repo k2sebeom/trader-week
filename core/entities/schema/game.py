@@ -4,7 +4,7 @@ from sqlalchemy import String, ForeignKey, exists
 from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 
 from core.entities.schema.db import Base
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class Game(Base):
@@ -16,6 +16,7 @@ class Game(Base):
     companies: Mapped[List["Company"]] = relationship(back_populates='game')
 
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
+    started_at: Mapped[datetime] = mapped_column(nullable=True)
 
 
 class Company(Base):
@@ -43,6 +44,8 @@ class Event(Base):
     description: Mapped[str] = mapped_column()
     price: Mapped[int] = mapped_column()
 
+    happen_at: Mapped[datetime] = mapped_column()
+
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     company: Mapped["Company"] = relationship(back_populates="events")
 
@@ -62,7 +65,9 @@ def create_events(
     db: Session,
     events: List[Event],
 ) -> Game:
+    open_at = datetime.now() + timedelta(hours=1)
     for e in events:
+        e.happen_at = open_at
         db.add(e)
     db.commit()
     return events

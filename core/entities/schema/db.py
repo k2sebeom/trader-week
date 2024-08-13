@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from core.config import config
 
@@ -21,7 +21,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 # Dependency
-def get_db():
+def get_db() -> Session:
     db = SessionLocal()
     try:
         yield db
