@@ -31,6 +31,7 @@ def game_to_dto(game: Game) -> GameDTO:
     return GameDTO(
         id=game.id,
         theme=game.theme,
+        started=game.started_at is not None,
         companies=[
             CompanyDTO(
                 id=c.id,
@@ -134,8 +135,9 @@ async def join_game(id: int, db: Session = Depends(get_db), user_id: Annotated[U
     if game.started_at is not None:
         raise HTTPException(403, 'Cannot join started game')
     
-    game.users.append(user)
-    db.commit()
+    if user not in game.users:
+        game.users.append(user)
+        db.commit()
     return game_to_dto(game)
 
 

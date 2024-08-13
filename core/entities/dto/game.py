@@ -22,7 +22,7 @@ class GameDTO(BaseModel):
     theme: str
     companies: List[CompanyDTO]
     users: List[UserDTO]
-
+    started: bool
 
 class CreateGameDTO(BaseModel):
     theme: str
