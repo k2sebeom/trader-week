@@ -86,6 +86,8 @@ class Trade(Base):
 
     game_id: Mapped[int] = mapped_column(ForeignKey("games.id"))
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    
+    day: Mapped[int] = mapped_column()
     amount: Mapped[int] = mapped_column()
 
 
@@ -145,8 +147,16 @@ def get_or_create_user(
 def get_user_by_id(
         db: Session,
         id: int
-    ) -> Optional[Game]:
+    ) -> Optional[User]:
     if db.query(exists(User).where(User.id == id)).scalar():
         return db.query(User).where(User.id == id).scalar()
     else:
         return None
+
+def create_trades(
+        db: Session,
+        trades: List[Trade],
+    ) -> List[Trade]:
+    db.add_all(trades)
+    db.commit()
+    return trades

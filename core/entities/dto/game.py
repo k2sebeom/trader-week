@@ -26,3 +26,10 @@ class GameDTO(BaseModel):
 
 class CreateGameDTO(BaseModel):
     theme: str
+
+class TradeDTO(BaseModel):
+    company_id: int
+    amount: int
+
+class CreateTradeDTO(BaseModel):
+    trades: List[TradeDTO]
