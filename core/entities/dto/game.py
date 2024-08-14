@@ -2,7 +2,6 @@ from typing import List
 
 from pydantic import BaseModel
 
-from core.entities.dto.user import UserDTO
 
 class EventDTO(BaseModel):
     id: int    
@@ -21,8 +20,15 @@ class GameDTO(BaseModel):
     id: int
     theme: str
     companies: List[CompanyDTO]
-    users: List[UserDTO]
+    users: List["UserDTO"]
     started: bool
+
+class UserDTO(BaseModel):
+    id: int
+    nickname: str
+    gold: int
+
+    games: List["GameDTO"]
 
 class CreateGameDTO(BaseModel):
     theme: str

@@ -1,5 +1,4 @@
 from typing import Annotated, Union
-from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi import Cookie
@@ -8,16 +7,11 @@ from sqlalchemy.orm import Session
 
 from core.entities.schema.db import get_db
 from core.entities.schema.game import get_or_create_user, User, get_user_by_id
-from core.entities.dto.user import SignInUserDTO, UserDTO
+from core.entities.dto.user import SignInUserDTO
+from core.entities.dto.game import UserDTO
+from core.entities.dto.utils import user_to_dto
 
 user_router = APIRouter(prefix='/user')
-
-def user_to_dto(user: User) -> UserDTO:
-    return UserDTO(
-        id=user.id,
-        nickname=user.nickname,
-        gold=user.gold,
-    )
 
 
 @user_router.post("/signin")
