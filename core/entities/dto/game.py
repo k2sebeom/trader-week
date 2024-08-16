@@ -28,8 +28,6 @@ class UserDTO(BaseModel):
     nickname: str
     gold: int
 
-    games: List["GameDTO"]
-
 class CreateGameDTO(BaseModel):
     theme: str
 

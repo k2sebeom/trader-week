@@ -16,6 +16,14 @@ def current_price(initial_price: int, events: List[Event]):
     return initial_price
 
 
+def user_to_dto(user: User) -> UserDTO:
+    return UserDTO(
+        id=user.id,
+        nickname=user.nickname,
+        gold=user.gold,
+    )
+
+
 def game_to_dto(game: Game) -> GameDTO:
     return GameDTO(
         id=game.id,
@@ -40,22 +48,7 @@ def game_to_dto(game: Game) -> GameDTO:
             for c in game.companies
         ],
         users=[
-            UserDTO(
-                nickname=user.nickname,
-                id=user.id,
-                gold=user.gold,
-            )
+            user_to_dto(user)
             for user in game.users
         ],
-    )
-
-def user_to_dto(user: User) -> UserDTO:
-    return UserDTO(
-        id=user.id,
-        nickname=user.nickname,
-        gold=user.gold,
-
-        games=[
-            game_to_dto(g) for g in user.games
-        ]
     )
