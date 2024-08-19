@@ -33,6 +33,10 @@ class Game(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     started_at: Mapped[datetime] = mapped_column(nullable=True)
 
+    @property
+    def started(self) -> bool:
+        return self.started is not None
+
 
 class Company(Base):
     __tablename__ = "companies"

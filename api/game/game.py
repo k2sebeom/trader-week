@@ -9,8 +9,8 @@ from core.entities.schema.db import get_db
 from core.entities.schema.game import create_game, get_game_by_id, create_events, Game, get_user_by_id, get_last_game, get_all_games
 from core.entities.schema.game import Trade, create_trades, Event
 from core.entities.dto.game import GameDTO, CompanyDTO, EventDTO, CreateGameDTO, UserDTO
-from core.entities.dto.game import CreateTradeDTO, TradeDTO
-from core.entities.dto.utils import game_to_dto, filter_events, current_price
+from core.entities.dto.game import CreateTradeDTO, TradeDTO, HoldingsDTO
+from core.entities.dto.convert import game_to_dto, filter_events, get_prices, get_holdings
 
 game_router = APIRouter(prefix='/game')
 
@@ -72,7 +72,7 @@ async def start_game(id: int, db: Session = Depends(get_db), user_id: Annotated[
     game.started_at = now
     for c in game.companies:
         for i, e in enumerate(c.events):
-            e.happen_at = now + timedelta(minutes=i * 2)
+            e.happen_at = now + timedelta(minutes=(i + 1) * 2)
     db.commit()
     return game_to_dto(game)
 
@@ -115,7 +115,7 @@ async def join_game(id: int, db: Session = Depends(get_db), user_id: Annotated[U
 
 
 @game_router.post("/{id}/trade")
-async def make_trade(id: int, req: CreateTradeDTO, db: Session = Depends(get_db), user_id: Annotated[Union[int, None], Cookie()] = None) -> List[TradeDTO]:
+async def make_trade(id: int, req: CreateTradeDTO, db: Session = Depends(get_db), user_id: Annotated[Union[int, None], Cookie()] = None) -> HoldingsDTO:
     if user_id is None:
         raise HTTPException(401, 'Not signed in')
     user = get_user_by_id(db, user_id)
@@ -128,10 +128,10 @@ async def make_trade(id: int, req: CreateTradeDTO, db: Session = Depends(get_db)
     if game.started_at is None or user_id not in [u.id for u in game.users]:
         raise HTTPException(403, 'Not allowed to make trade in this game')
 
-    events = filter_events(game.companies[0].events)
+    events = filter_events(game.companies[0].events, game.started_at is not None)
 
-    if datetime.now() - events[-1].happen_at > timedelta(seconds=115):
-        raise HTTPException(403, 'Market closed')
+    # if datetime.now() - events[-1].happen_at > timedelta(seconds=115):
+    #     raise HTTPException(403, 'Market closed')
 
     curr_day = len(events) + 1
     trades = []
@@ -141,17 +141,12 @@ async def make_trade(id: int, req: CreateTradeDTO, db: Session = Depends(get_db)
         c.id: c
         for c in game.companies
     }
-    holding = {
-        c.id: 0
-        for c in game.companies
-    }
-    for t in filter(lambda t: t.user_id == user_id, game.trades):
-        holding[t.company_id] += t.amount
+    holding = get_holdings(user.id, game.companies, game.trades)
 
     for t in req.trades:
         if t.company_id in company_dict:
-            events = filter_events(company_dict[t.company_id].events)
-            price = current_price(company_dict[t.company_id].price, events) * t.amount
+            events = filter_events(company_dict[t.company_id].events, game.started)
+            price = get_prices(company_dict[t.company_id].price, events)[-1] * t.amount
             if curr_gold < price:
                 break
             if t.amount < 0 and holding[t.company_id] < -t.amount:
@@ -169,4 +164,7 @@ async def make_trade(id: int, req: CreateTradeDTO, db: Session = Depends(get_db)
     trades = create_trades(db, trades)
     user.gold = curr_gold
     db.commit()
-    return trades
+    return HoldingsDTO(
+        holdings=holding,
+        gold=curr_gold,
+    )
