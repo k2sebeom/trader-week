@@ -9,7 +9,7 @@ from core.entities.schema.db import get_db
 from core.entities.schema.game import get_or_create_user, User, get_user_by_id
 from core.entities.dto.user import SignInUserDTO
 from core.entities.dto.game import UserDTO
-from core.entities.dto.utils import user_to_dto
+from core.entities.dto.convert import user_to_dto
 
 user_router = APIRouter(prefix='/user')
 

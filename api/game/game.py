@@ -10,7 +10,7 @@ from core.entities.schema.game import create_game, get_game_by_id, create_events
 from core.entities.schema.game import Trade, create_trades, Event
 from core.entities.dto.game import GameDTO, CompanyDTO, EventDTO, CreateGameDTO, UserDTO
 from core.entities.dto.game import CreateTradeDTO, TradeDTO, HoldingsDTO
-from core.entities.dto.convert import game_to_dto, filter_events, get_prices, get_holdings
+from core.entities.dto.convert import game_to_dto
 
 game_router = APIRouter(prefix='/game')
 
@@ -30,9 +30,9 @@ async def post_new_game(req: CreateGameDTO, db: Session = Depends(get_db), user_
         raise HTTPException(400, 'New Game can be only created per minute')
     
     companies = await game_service.get_companies(theme=req.theme)
-    game = create_game(db, req.theme, companies)
-
     events = await game_service.create_new_events(game.companies)
+    
+    game = create_game(db, req.theme, companies)
     create_events(db, events)
     game.users.append(user)
     db.commit()
@@ -68,11 +68,7 @@ async def start_game(id: int, db: Session = Depends(get_db), user_id: Annotated[
     if game.started_at is not None:
         raise HTTPException(400, f'Game {id} already started at {game.started_at}')
 
-    now = datetime.now()
-    game.started_at = now
-    for c in game.companies:
-        for i, e in enumerate(c.events):
-            e.happen_at = now + timedelta(minutes=(i + 1) * 2)
+    game_service.start_game(game)
     db.commit()
     return game_to_dto(game)
 
@@ -128,43 +124,14 @@ async def make_trade(id: int, req: CreateTradeDTO, db: Session = Depends(get_db)
     if game.started_at is None or user_id not in [u.id for u in game.users]:
         raise HTTPException(403, 'Not allowed to make trade in this game')
 
-    events = filter_events(game.companies[0].events, game.started_at is not None)
-
-    # if datetime.now() - events[-1].happen_at > timedelta(seconds=115):
-    #     raise HTTPException(403, 'Market closed')
-
-    curr_day = len(events) + 1
-    trades = []
-    curr_gold = user.gold
-
-    company_dict = {
-        c.id: c
-        for c in game.companies
-    }
-    holding = get_holdings(user.id, game.companies, game.trades)
-
-    for t in req.trades:
-        if t.company_id in company_dict:
-            events = filter_events(company_dict[t.company_id].events, game.started)
-            price = get_prices(company_dict[t.company_id].price, events)[-1] * t.amount
-            if curr_gold < price:
-                break
-            if t.amount < 0 and holding[t.company_id] < -t.amount:
-                continue
-            curr_gold -= price
-            trades.append(
-                Trade(
-                    user_id=user_id,
-                    game_id=id,
-                    company_id=t.company_id,
-                    day=curr_day,
-                    amount=t.amount,
-                )
-            )
+    if datetime.now() - game.started_at > timedelta(minutes=2 * 8):
+        raise HTTPException(403, 'Market closed')
+    
+    trades = game_service.perform_trades(user, game, req.trades)
     trades = create_trades(db, trades)
-    user.gold = curr_gold
-    db.commit()
+
+    game = get_game_by_id(db, id)
     return HoldingsDTO(
-        holdings=holding,
-        gold=curr_gold,
+        holdings=game.get_holdings(user),
+        gold=user.gold,
     )

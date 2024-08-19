@@ -2,8 +2,7 @@ from typing import List, Dict
 from datetime import datetime, timedelta
 
 from core.entities.schema.game import Game, Trade, Company, Event, User
-from core.entities.dto.game import GameDTO, CompanyDTO, EventDTO, UserDTO, ParticipantDTO
-from core.utils.game import filter_events, get_prices, get_holdings
+from core.entities.dto.game import GameDTO, TradeDTO, CompanyDTO, EventDTO, UserDTO, ParticipantDTO
 
 
 def user_to_dto(user: User) -> UserDTO:
@@ -13,17 +12,18 @@ def user_to_dto(user: User) -> UserDTO:
         gold=user.gold,
     )
 
+
 def user_to_participant(user: User, game: Game) -> ParticipantDTO:
     return ParticipantDTO(
         id=user.id,
         nickname=user.nickname,
         gold=user.gold,
-        holdings=get_holdings(user.id, game.companies, game.trades)
+        holdings=game.get_holdings(user),
     )
 
+
 def company_to_dto(company: Company) -> CompanyDTO:
-    events = filter_events(company.events, company.game.started)
-    price_history = get_prices(company.price, events)
+    price_history = company.prices
     return CompanyDTO(
         id=company.id,
         name=company.name,
@@ -38,8 +38,17 @@ def company_to_dto(company: Company) -> CompanyDTO:
                 price=e.price,
                 happen_at=e.happen_at,
             )
-            for e in events
+            for e in company.filtered_events
         ],
+    )
+
+
+def trade_to_dto(trade: Trade) -> TradeDTO:
+    return TradeDTO(
+        company_id=trade.company_id,
+        user_id=trade.user_id,
+        amount=trade.amount,
+        day=trade.day
     )
 
 
@@ -47,18 +56,18 @@ def game_to_dto(game: Game) -> GameDTO:
     return GameDTO(
         id=game.id,
         theme=game.theme,
-        started=game.started_at is not None,
+        started=game.started,
         started_at=game.started_at,
         companies=[
             company_to_dto(c)
             for c in game.companies
         ],
-        users=[
+        participants=[
             user_to_participant(user, game)
             for user in game.users
         ],
-        holdings={
-            user.id: get_holdings(user.id, game.companies, game.trades)
-            for user in game.users
-        }
+        trades=[
+            trade_to_dto(trade)
+            for trade in game.trades
+        ]
     )

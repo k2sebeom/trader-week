@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from sqlalchemy import String, ForeignKey, exists, Table, Column
 from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
@@ -35,7 +35,16 @@ class Game(Base):
 
     @property
     def started(self) -> bool:
-        return self.started is not None
+        return self.started_at is not None
+    
+    def get_holdings(self, user: "User") -> Dict[int, int]:
+        holdings = {
+            c.id: 0
+            for c in self.companies
+        }
+        for t in filter(lambda t: t.user_id == user.id, self.trades):
+            holdings[t.company_id] += t.amount
+        return holdings
 
 
 class Company(Base):
@@ -52,6 +61,22 @@ class Company(Base):
     price: Mapped[int] = mapped_column()
 
     events: Mapped[List["Event"]] = relationship(back_populates="company")
+
+    @property
+    def filtered_events(self) -> List["Event"]:
+        if not self.game.started:
+            return []
+        now = datetime.now()
+        return list(filter(lambda e: (e.happen_at - now) < timedelta(seconds=0), self.events))
+
+    @property
+    def prices(self) -> List[int]:
+        curr = self.price
+        history = [self.price]
+        for e in self.filtered_events:
+            curr += int(curr * e.price / 100)
+            history.append(curr)
+        return history
 
 
 class Event(Base):

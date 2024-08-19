@@ -5,10 +5,12 @@ from typing import List
 from uuid import uuid1
 import base64
 from io import BytesIO
+from datetime import datetime, timedelta
 
 from openai import AsyncOpenAI
 
-from core.entities.schema.game import Event, Company
+from core.entities.schema.game import Event, Company, Game, User, Trade
+from core.entities.dto.game import TradeReqDTO
 from core.config import config
 from PIL import Image
 
@@ -138,3 +140,43 @@ class GameService:
                 )
             messages.append(msg)
         return events
+
+    def start_game(self, game: Game):
+        now = datetime.now()
+        game.started_at = now
+        for c in game.companies:
+            for i, e in enumerate(c.events):
+                e.happen_at = now + timedelta(minutes=(i + 1) * 2)
+
+    def perform_trades(self, user: User, game: Game, trade_reqs: List[TradeReqDTO]) -> List[Trade]:
+        company_dict = {
+            c.id: c
+            for c in game.companies
+        }
+        holdings = game.get_holdings(user)
+        curr_gold = user.gold
+
+        trades: List[Trade] = []
+   
+        for t in trade_reqs:
+            if t.company_id in company_dict:
+                company = company_dict[t.company_id]
+                price = company.prices[-1] * t.amount
+
+                if curr_gold < price:
+                    break
+                if t.amount < 0 and holdings[t.company_id] < -t.amount:
+                    continue
+                
+                curr_gold -= price
+                trades.append(
+                    Trade(
+                        user_id=user.id,
+                        game_id=game.id,
+                        company_id=t.company_id,
+                        day=len(company.filtered_events),
+                        amount=t.amount,
+                    )
+                )
+        user.gold = curr_gold
+        return trades

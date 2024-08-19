@@ -27,7 +27,7 @@ class GameDTO(BaseModel):
     id: int
     theme: str
     companies: List[CompanyDTO]
-    users: List["ParticipantDTO"]
+    participants: List["ParticipantDTO"]
     trades: List['TradeDTO']
     started: bool
     started_at: Optional[datetime]
@@ -45,12 +45,18 @@ class UserDTO(BaseModel):
 
 class TradeDTO(BaseModel):
     company_id: int
+    user_id: int
     amount: int
+    day: int
 
 
 # Requests
 class CreateGameDTO(BaseModel):
     theme: str
 
+class TradeReqDTO(BaseModel):
+    company_id: int
+    amount: int
+
 class CreateTradeDTO(BaseModel):
-    trades: List[TradeDTO]
+    trades: List[TradeReqDTO]
