@@ -1,7 +1,4 @@
-from typing import List, Dict
-from datetime import datetime, timedelta
-
-from core.entities.schema.game import Game, Trade, Company, Event, User
+from core.entities.schema.game import Game, Trade, Company, User
 from core.entities.dto.game import GameDTO, TradeDTO, CompanyDTO, EventDTO, UserDTO, ParticipantDTO
 
 
@@ -44,12 +41,7 @@ def company_to_dto(company: Company) -> CompanyDTO:
 
 
 def trade_to_dto(trade: Trade) -> TradeDTO:
-    return TradeDTO(
-        company_id=trade.company_id,
-        user_id=trade.user_id,
-        amount=trade.amount,
-        day=trade.day
-    )
+    return TradeDTO(company_id=trade.company_id, user_id=trade.user_id, amount=trade.amount, day=trade.day)
 
 
 def game_to_dto(game: Game) -> GameDTO:
@@ -58,16 +50,7 @@ def game_to_dto(game: Game) -> GameDTO:
         theme=game.theme,
         started=game.started,
         started_at=game.started_at,
-        companies=[
-            company_to_dto(c)
-            for c in game.companies
-        ],
-        participants=[
-            user_to_participant(user, game)
-            for user in game.users
-        ],
-        trades=[
-            trade_to_dto(trade)
-            for trade in game.trades
-        ]
+        companies=[company_to_dto(c) for c in game.companies],
+        participants=[user_to_participant(user, game) for user in game.users],
+        trades=[trade_to_dto(trade) for trade in game.trades],
     )

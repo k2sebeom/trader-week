@@ -8,6 +8,9 @@ from io import BytesIO
 from datetime import datetime, timedelta
 
 from openai import AsyncOpenAI
+from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
+from openai.types.chat_model import ChatModel
 
 from core.entities.schema.game import Event, Company, Game, User, Trade
 from core.entities.dto.game import TradeReqDTO
@@ -15,12 +18,12 @@ from core.config import config
 from PIL import Image
 
 
-COMPANY_PROMPT = ''''Create me 5 imaginary companies with very short descriptions.
+COMPANY_PROMPT = """'Create me 5 imaginary companies with very short descriptions.
 Theme: {theme}
 You can go wild! Come up with some fun concepts! All response in korean
-Format should in in JSON:'''
+Format should in in JSON:"""
 
-COMPANY_PROMPT_FORMAT = '''
+COMPANY_PROMPT_FORMAT = """
 {
     "companies": [{
         "name": Name of the company,
@@ -28,17 +31,17 @@ COMPANY_PROMPT_FORMAT = '''
         "price": current stock price in number between 100 ~ 1000
     }]
 }
-'''
+"""
 
-EVENT_PROMPT = '''We're playing stock price games with these companies.
+EVENT_PROMPT = """We're playing stock price games with these companies.
 
 {companies}
 
 At each day, we get an event related to each company and stock price change corresponding to the event.
 
-All response in Korean. Give output in Json Format:'''
+All response in Korean. Give output in Json Format:"""
 
-EVENT_PROMPT_FORMAT = '''
+EVENT_PROMPT_FORMAT = """
 {
     "events": [{
         "company": company name,
@@ -46,33 +49,35 @@ EVENT_PROMPT_FORMAT = '''
         "price": Price change number in percentage,
     }]
 }
-'''
+"""
+
 
 class GameService:
-    def __init__(self, gpt_model: str = 'gpt-4o'):
+    def __init__(self, gpt_model: ChatModel = "gpt-4o"):
         self.openai_client = AsyncOpenAI(
             api_key=config.openai_key,
         )
         self.gpt_model = gpt_model
-    
+
     async def get_companies(self, theme: str) -> List[Company]:
         resp = await self.openai_client.chat.completions.create(
             model=self.gpt_model,
             messages=[
                 {
-                    'role': 'user',
-                    'content': COMPANY_PROMPT.format(theme=theme) + COMPANY_PROMPT_FORMAT,
+                    "role": "user",
+                    "content": COMPANY_PROMPT.format(theme=theme) + COMPANY_PROMPT_FORMAT,
                 }
             ],
             response_format={"type": "json_object"},
         )
-        data = json.loads(resp.choices[0].message.content)
+        data = json.loads(resp.choices[0].message.content or "{}")
         companies = [
             Company(
-                name=c['name'],
-                description=c['description'],
-                price=c['price'],
-            ) for c in data['companies']
+                name=c["name"],
+                description=c["description"],
+                price=c["price"],
+            )
+            for c in data["companies"]
         ]
         files = await self.get_companies_thumbnail(companies)
         for i in range(len(companies)):
@@ -83,62 +88,59 @@ class GameService:
         tasks = []
         for c in companies:
             task = self.openai_client.images.generate(
-                prompt=f'Create me an image thumbnail for the following company. Name: {c.name}, Desc: {c.description}',
-                model='dall-e-3',
-                size='1024x1024',
-                response_format='b64_json',
+                prompt=f"Create me an image thumbnail for the following company. Name: {c.name}, Desc: {c.description}",
+                model="dall-e-3",
+                size="1024x1024",
+                response_format="b64_json",
             )
             tasks.append(task)
-        
+
         results = await asyncio.gather(*tasks)
         files = []
         for resp in results:
-            b64_json = resp.data[0].b64_json
+            b64_json = resp.data[0].b64_json or ""
             data = base64.b64decode(b64_json)
             img = Image.open(BytesIO(data))
-            fname = f'{uuid1()}.jpg'
+            fname = f"{uuid1()}.jpg"
             fpath = os.path.join(config.thumbnails_path, fname)
-            img.save(fpath, 'JPEG')
+            img.save(fpath, "JPEG")
             files.append(fname)
         return files
 
     async def create_new_events(self, companies: List[Company]) -> List[Event]:
-        companies_prompt = ''
+        companies_prompt = ""
         for c in companies:
-            companies_prompt += f'{c.name} ({c.price} Gold): {c.description}\n'
+            companies_prompt += f"{c.name} ({c.price} Gold): {c.description}\n"
 
-        event_prompt = EVENT_PROMPT.format(
-            companies=companies_prompt,
-        ) + EVENT_PROMPT_FORMAT
+        event_prompt = (
+            EVENT_PROMPT.format(
+                companies=companies_prompt,
+            )
+            + EVENT_PROMPT_FORMAT
+        )
 
-        messages = [{
-            'role': 'user',
-            'content': event_prompt
-        }]
+        messages: List[ChatCompletionMessageParam] = [ChatCompletionUserMessageParam(role="user", content=event_prompt)]
         events: List[Event] = []
 
         for d in range(7):
-            messages.append({
-                'role': 'user',
-                'content': f'Day {d + 1}'
-            })
+            messages.append(ChatCompletionUserMessageParam(role="user", content=f"Day {d + 1}"))
             resp = await self.openai_client.chat.completions.create(
-                model=self.gpt_model,
                 messages=messages,
+                model=self.gpt_model,
                 response_format={"type": "json_object"},
             )
             msg = resp.choices[0].message
-            data = json.loads(msg.content)
-            for i, e in enumerate(data['events']):
+            data = json.loads(msg.content or "{}")
+            for i, e in enumerate(data["events"]):
                 events.append(
                     Event(
                         day=d + 1,
                         company_id=companies[i].id,
-                        description=e['description'],
-                        price=e['price'],
+                        description=e["description"],
+                        price=e["price"],
                     )
                 )
-            messages.append(msg)
+            messages.append(ChatCompletionAssistantMessageParam(role="assistant", content=msg.content))
         return events
 
     def start_game(self, game: Game):
@@ -149,15 +151,12 @@ class GameService:
                 e.happen_at = now + timedelta(minutes=(i + 1) * 2)
 
     def perform_trades(self, user: User, game: Game, trade_reqs: List[TradeReqDTO]) -> List[Trade]:
-        company_dict = {
-            c.id: c
-            for c in game.companies
-        }
+        company_dict = {c.id: c for c in game.companies}
         holdings = game.get_holdings(user)
         curr_gold = user.gold
 
         trades: List[Trade] = []
-   
+
         for t in trade_reqs:
             if t.company_id in company_dict:
                 company = company_dict[t.company_id]
@@ -167,7 +166,7 @@ class GameService:
                     break
                 if t.amount < 0 and holdings[t.company_id] < -t.amount:
                     continue
-                
+
                 curr_gold -= price
                 trades.append(
                     Trade(

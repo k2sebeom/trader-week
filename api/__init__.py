@@ -9,8 +9,8 @@ from core.config import config
 router = APIRouter(prefix=config.api_prefix)
 
 
-router.include_router(health_router, tags=['Health'])
-router.include_router(game_router, tags=['Game'])
-router.include_router(user_router, tags=['User'])
+router.include_router(health_router, tags=["Health"])
+router.include_router(game_router, tags=["Game"])
+router.include_router(user_router, tags=["User"])
 
 __all__ = ["router"]
