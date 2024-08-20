@@ -9,7 +9,7 @@ RICH_FORMAT = "[%(asctime)s] >> %(message)s"
 
 def get_logger() -> logging.Logger:
     logging.basicConfig(
-        level=logging.INFO | logging.WARNING | logging.ERROR | logging.CRITICAL | logging.WARN,
+        level=logging.INFO,
         format=RICH_FORMAT,
         handlers=[RichHandler(rich_tracebacks=True, show_time=False, show_path=False)],
     )

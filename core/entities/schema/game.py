@@ -122,7 +122,7 @@ class Trade(Base):
 
 
 def get_all_games(db: Session) -> List[Game]:
-    return db.query(Game).where(Game.started_at.is_not(None)).order_by(Game.created_at.desc()).all()
+    return db.query(Game).where(Game.started_at.is_(None)).order_by(Game.created_at.desc()).all()
 
 
 def get_last_game(
