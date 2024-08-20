@@ -39,7 +39,8 @@ EVENT_PROMPT = """We're playing stock price games with these companies.
 {companies}
 
 At each day, we get an event related to each company and stock price change corresponding to the event.
-Events should make a coherent story, and occasionally include super dramatic and fun price changes for certain companies.
+Events should make a coherent story as a whole.
+Occasionally include super dramatic and fun price changes for certain companies.
 
 All response in Korean. Give output in Json Format:"""
 
