@@ -13,6 +13,7 @@ pillow = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
 bcrypt = "*"
+rich = "*"
 
 [dev-packages]
 alembic = "*"

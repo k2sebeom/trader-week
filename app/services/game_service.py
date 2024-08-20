@@ -11,11 +11,12 @@ from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
 from openai.types.chat_model import ChatModel
+from PIL import Image
 
 from core.entities.schema.game import Event, Company, Game, User, Trade
 from core.entities.dto.game import TradeReqDTO
 from core.config import config
-from PIL import Image
+from core.utils.logger import logger
 
 
 COMPANY_PROMPT = """'Create me 5 imaginary companies with very short descriptions.
@@ -38,6 +39,7 @@ EVENT_PROMPT = """We're playing stock price games with these companies.
 {companies}
 
 At each day, we get an event related to each company and stock price change corresponding to the event.
+Events should make a coherent story, and occasionally include dynamic events for certain companies.
 
 All response in Korean. Give output in Json Format:"""
 
@@ -60,6 +62,7 @@ class GameService:
         self.gpt_model = gpt_model
 
     async def get_companies(self, theme: str) -> List[Company]:
+        logger.info("Creating Companies...")
         resp = await self.openai_client.chat.completions.create(
             model=self.gpt_model,
             messages=[
@@ -79,9 +82,12 @@ class GameService:
             )
             for c in data["companies"]
         ]
+        logger.info("Companies Creation Complete")
+        logger.info("Creating Thumbnails...")
         files = await self.get_companies_thumbnail(companies)
         for i in range(len(companies)):
             companies[i].thumbnail = files[i]
+        logger.info("Thumbnails creation complete")
         return companies
 
     async def get_companies_thumbnail(self, companies: List[Company]):
@@ -121,7 +127,7 @@ class GameService:
 
         messages: List[ChatCompletionMessageParam] = [ChatCompletionUserMessageParam(role="user", content=event_prompt)]
         events: List[Event] = []
-
+        logger.info("Creating Events...")
         for d in range(7):
             messages.append(ChatCompletionUserMessageParam(role="user", content=f"Day {d + 1}"))
             resp = await self.openai_client.chat.completions.create(
@@ -140,6 +146,7 @@ class GameService:
                         price=e["price"],
                     )
                 )
+            logger.info(f"Day {d + 1} creation complete")
             messages.append(ChatCompletionAssistantMessageParam(role="assistant", content=msg.content))
         return events
 
