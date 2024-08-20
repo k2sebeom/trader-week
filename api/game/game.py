@@ -4,7 +4,7 @@ from typing import Annotated, Union, List
 from fastapi import APIRouter, Depends, HTTPException, Cookie
 from sqlalchemy.orm import Session
 
-from app.services.game_service import GameService
+from app.services.game_service import GameService, GameException
 from core.entities.schema.db import get_db
 from core.entities.schema.game import (
     create_game,
@@ -145,7 +145,10 @@ async def make_trade(
     if datetime.now() - game.started_at > timedelta(minutes=2 * 8):
         raise HTTPException(403, "Market closed")
 
-    trades = game_service.perform_trades(user, game, req.trades)
+    try:
+        trades = game_service.perform_trades(user, game, req.trades)
+    except GameException as e:
+        raise HTTPException(400, e)
     trades = create_trades(db, trades)
 
     db.refresh(game)

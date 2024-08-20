@@ -55,6 +55,14 @@ EVENT_PROMPT_FORMAT = """
 """
 
 
+class GameException(Exception):
+    pass
+
+
+class InvalidTradesException(GameException):
+    pass
+
+
 class GameService:
     def __init__(self, gpt_model: ChatModel = "gpt-4o"):
         self.openai_client = AsyncOpenAI(
@@ -168,14 +176,12 @@ class GameService:
         for t in trade_reqs:
             if t.company_id in company_dict:
                 company = company_dict[t.company_id]
+
                 price = company.prices[-1] * t.amount
 
-                if curr_gold < price:
-                    break
-                if t.amount < 0 and holdings[t.company_id] < -t.amount:
-                    continue
-
                 curr_gold -= price
+                holdings[company.id] += t.amount
+
                 trades.append(
                     Trade(
                         user_id=user.id,
@@ -185,5 +191,11 @@ class GameService:
                         amount=t.amount,
                     )
                 )
+        if curr_gold < 0:
+            raise InvalidTradesException("Insufficient gold for trades")
+        for _, h in holdings.items():
+            if h < 0:
+                raise InvalidTradesException("Insufficient holdings for trades")
+
         user.gold = curr_gold
         return trades
