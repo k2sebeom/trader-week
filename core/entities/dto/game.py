@@ -34,6 +34,7 @@ class GameDTO(BaseModel):
     trades: List["TradeDTO"]
     started: bool
     started_at: Optional[datetime]
+    closed: bool
 
 
 class ParticipantDTO(BaseModel):
