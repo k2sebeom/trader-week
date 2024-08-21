@@ -1,7 +1,7 @@
 import json
 import os
 import asyncio
-from typing import List
+from typing import List, Dict
 from uuid import uuid1
 import base64
 from io import BytesIO
@@ -164,7 +164,7 @@ class GameService:
         game.started_at = now
         for c in game.companies:
             for i, e in enumerate(c.events):
-                e.happen_at = now + timedelta(minutes=(i + 1) * 2)
+                e.happen_at = now + timedelta(minutes=1 * (i + 1))
 
     def perform_trades(self, user: User, game: Game, trade_reqs: List[TradeReqDTO]) -> List[Trade]:
         company_dict = {c.id: c for c in game.companies}
@@ -199,3 +199,25 @@ class GameService:
 
         user.gold = curr_gold
         return trades
+
+    def get_game_result(self, game: Game) -> Dict[int, int]:
+        result = {u.id: 0 for u in game.users}
+        prices = {c.id: c.prices for c in game.companies}
+        for t in game.trades:
+            result[t.user_id] -= prices[t.company_id][t.day] * t.amount
+        return result
+
+    def throws_all_stocks(self, game: Game, user: User):
+        holdings = game.get_holdings(user)
+
+        for c in game.companies:
+            if holdings[c.id] > 0:
+                game.trades.append(
+                    Trade(
+                        user_id=user.id,
+                        day=7,
+                        amount=-holdings[c.id],
+                        company_id=c.id,
+                    )
+                )
+                user.gold += holdings[c.id] * c.prices[-1]

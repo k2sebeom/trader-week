@@ -16,7 +16,7 @@ from core.entities.schema.game import (
 )
 from core.entities.schema.game import create_trades
 from core.entities.dto.game import GameDTO, CreateGameDTO
-from core.entities.dto.game import CreateTradeDTO, HoldingsDTO
+from core.entities.dto.game import CreateTradeDTO, HoldingsDTO, GameResultDTO
 from core.entities.dto.convert import game_to_dto
 
 game_router = APIRouter(prefix="/game")
@@ -156,3 +156,39 @@ async def make_trade(
         holdings=game.get_holdings(user),
         gold=user.gold,
     )
+
+
+@game_router.get("/{id}/result")
+async def get_result(id: int, db: Session = Depends(get_db)) -> GameResultDTO:
+    game = get_game_by_id(db, id)
+    if game is None:
+        raise HTTPException(404, f"Game with id {id} not found")
+    if not game.closed:
+        raise HTTPException(400, "Game is not closed yet")
+
+    result = game_service.get_game_result(game)
+
+    return GameResultDTO(result=result)
+
+
+@game_router.put("/{id}/throw")
+async def throw_all_stocks(
+    id: int, db: Session = Depends(get_db), user_id: Annotated[Union[int, None], Cookie()] = None
+) -> GameDTO:
+    game = get_game_by_id(db, id)
+    if game is None:
+        raise HTTPException(404, f"Game with id {id} not found")
+    if not game.closed:
+        raise HTTPException(400, "Game is not closed yet")
+
+    if user_id is None:
+        raise HTTPException(401, "Not signed in")
+
+    user = get_user_by_id(db, user_id)
+    if user is None:
+        raise HTTPException(404, f"User {user_id} not found")
+
+    game_service.throws_all_stocks(game, user)
+    db.commit()
+    db.refresh(game)
+    return game_to_dto(game)

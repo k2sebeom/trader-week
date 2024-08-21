@@ -69,3 +69,7 @@ class TradeReqDTO(BaseModel):
 
 class CreateTradeDTO(BaseModel):
     trades: List[TradeReqDTO]
+
+
+class GameResultDTO(BaseModel):
+    result: Dict[int, int]

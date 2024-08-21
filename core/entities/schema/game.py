@@ -39,6 +39,10 @@ class Game(Base):
     def started(self) -> bool:
         return self.started_at is not None
 
+    @property
+    def closed(self) -> bool:
+        return len(self.companies[0].filtered_events) == 7
+
     def get_holdings(self, user: "User") -> Dict[int, int]:
         holdings = {c.id: 0 for c in self.companies}
         for t in filter(lambda t: t.user_id == user.id, self.trades):

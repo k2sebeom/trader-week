@@ -50,7 +50,7 @@ def game_to_dto(game: Game) -> GameDTO:
         theme=game.theme,
         started=game.started,
         started_at=game.started_at,
-        closed=len(game.companies[0].filtered_events) == 7,
+        closed=game.closed,
         companies=[company_to_dto(c) for c in game.companies],
         participants=[user_to_participant(user, game) for user in game.users],
         trades=[trade_to_dto(trade) for trade in game.trades],
