@@ -147,14 +147,16 @@ class GameService:
             msg = resp.choices[0].message
             data = json.loads(msg.content or "{}")
             for i, e in enumerate(data["events"]):
-                events.append(
-                    Event(
-                        day=d + 1,
-                        company_id=companies[i].id,
-                        description=e["description"],
-                        price=e["price"],
-                    )
+                new_event = Event(
+                    day=d + 1,
+                    company_id=companies[i].id,
+                    description=e["description"],
+                    price=e["price"],
+                    happen_at=datetime.now(),
                 )
+                events.append(new_event)
+                companies[i].events.append(new_event)
+
             logger.info(f"Day {d + 1} creation complete")
             messages.append(ChatCompletionAssistantMessageParam(role="assistant", content=msg.content))
         return events

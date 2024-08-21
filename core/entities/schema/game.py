@@ -147,18 +147,6 @@ def create_game(
     return game
 
 
-def create_events(
-    db: Session,
-    events: List[Event],
-) -> List[Event]:
-    open_at = datetime.now() + timedelta(days=1)
-    for e in events:
-        e.happen_at = open_at
-        db.add(e)
-    db.commit()
-    return events
-
-
 def get_game_by_id(db: Session, id: int) -> Optional[Game]:
     if db.query(exists(Game).where(Game.id == id)).scalar():
         return db.query(Game).where(Game.id == id).scalar()
