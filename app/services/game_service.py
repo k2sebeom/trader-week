@@ -207,6 +207,11 @@ class GameService:
         prices = {c.id: c.prices for c in game.companies}
         for t in game.trades:
             result[t.user_id] -= prices[t.company_id][t.day] * t.amount
+        for u in game.users:
+            holdings = game.get_holdings(u)
+            for c in game.companies:
+                result[u.id] += prices[c.id][-1] * holdings[c.id]
+
         return result
 
     def throws_all_stocks(self, game: Game, user: User):
