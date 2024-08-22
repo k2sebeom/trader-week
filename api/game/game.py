@@ -39,7 +39,7 @@ async def post_new_game(
 
     companies = await game_service.get_companies(theme=req.theme)
     await game_service.create_new_events(companies)
-    game = create_game(db, req.theme, companies)
+    game = create_game(db, req.theme, user, companies)
 
     game.users.append(user)
     db.commit()
@@ -71,7 +71,7 @@ async def start_game(
     if game is None:
         raise HTTPException(404, "Game not found")
 
-    if len(game.users) == 0 or game.users[0].id != user_id:
+    if game.owner is None or game.owner.id != user_id:
         raise HTTPException(401, "Not authorized to start the game")
 
     if game.started_at is not None:

@@ -23,6 +23,8 @@ class Game(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
+    owner: Mapped["User"] = relationship()
+
     theme: Mapped[str] = mapped_column(default="")
     companies: Mapped[List["Company"]] = relationship(back_populates="game")
 
@@ -138,9 +140,14 @@ def get_last_game(
 def create_game(
     db: Session,
     theme: str,
+    owner: User,
     companies: List[Company],
 ) -> Game:
-    game = Game(theme=theme, companies=companies)
+    game = Game(
+        theme=theme,
+        owner=owner,
+        companies=companies,
+    )
     db.add(game)
     db.commit()
     db.refresh(game)
