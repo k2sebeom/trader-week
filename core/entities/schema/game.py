@@ -23,7 +23,7 @@ class Game(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    owner: Mapped["User"] = relationship()
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", name="game_owner_id_fkey"), nullable=True)
 
     theme: Mapped[str] = mapped_column(default="")
     companies: Mapped[List["Company"]] = relationship(back_populates="game")
@@ -145,7 +145,7 @@ def create_game(
 ) -> Game:
     game = Game(
         theme=theme,
-        owner=owner,
+        owner_id=owner.id,
         companies=companies,
     )
     db.add(game)

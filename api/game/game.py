@@ -71,7 +71,7 @@ async def start_game(
     if game is None:
         raise HTTPException(404, "Game not found")
 
-    if game.owner is None or game.owner.id != user_id:
+    if game.owner_id != user_id:
         raise HTTPException(401, "Not authorized to start the game")
 
     if game.started_at is not None:
@@ -100,8 +100,8 @@ async def join_game(
 
     if user not in game.users:
         game.users.append(user)
-        if game.owner is None:
-            game.owner = user
+        if game.owner_id is None:
+            game.owner_id = user.id
         db.commit()
     return game_to_dto(game)
 
@@ -122,9 +122,9 @@ async def leave_game(
 
     # If owner is leaving
     game.users.remove(user)
-    if game.owner is not None and game.owner.id == user.id:
+    if game.owner_id == user.id:
         if len(game.users) > 0:
-            game.owner = game.users[0]
+            game.owner_id = game.users[0].id
 
     db.commit()
     return game_to_dto(game)
