@@ -1,7 +1,7 @@
 import json
 import os
 import asyncio
-from typing import List, Dict
+from typing import List, Dict, Any, Tuple
 from uuid import uuid1
 import base64
 from io import BytesIO
@@ -72,7 +72,7 @@ class GameService:
         )
         self.gpt_model = gpt_model
 
-    async def get_companies(self, theme: str) -> List[Company]:
+    async def get_companies(self, theme: str) -> Tuple[List[Company], str]:
         logger.info("Creating Companies...")
         resp = await self.openai_client.chat.completions.create(
             model=self.gpt_model,
@@ -84,7 +84,7 @@ class GameService:
             ],
             response_format={"type": "json_object"},
         )
-        data = json.loads(resp.choices[0].message.content or "{}")
+        data: Dict[str, Any] = json.loads(resp.choices[0].message.content or "{}")
         companies = [
             Company(
                 name=c["name"],
@@ -99,7 +99,7 @@ class GameService:
         for i in range(len(companies)):
             companies[i].thumbnail = files[i]
         logger.info("Thumbnails creation complete")
-        return companies
+        return companies, data.get("title", theme)
 
     async def get_companies_thumbnail(self, companies: List[Company]):
         tasks = []
