@@ -100,6 +100,8 @@ async def join_game(
 
     if user not in game.users:
         game.users.append(user)
+        if game.owner is None:
+            game.owner = user
         db.commit()
     return game_to_dto(game)
 
@@ -118,7 +120,12 @@ async def leave_game(
     if game is None:
         raise HTTPException(404, f"Game with id {id} not found")
 
+    # If owner is leaving
     game.users.remove(user)
+    if game.owner is not None and game.owner.id == user.id:
+        if len(game.users) > 0:
+            game.owner = game.users[0]
+
     db.commit()
     return game_to_dto(game)
 
