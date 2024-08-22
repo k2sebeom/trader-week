@@ -35,6 +35,7 @@ class GameDTO(BaseModel):
     started: bool
     started_at: Optional[datetime]
     closed: bool
+    owner_id: Optional[int]
 
 
 class ParticipantDTO(BaseModel):

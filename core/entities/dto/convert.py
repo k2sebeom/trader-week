@@ -49,6 +49,7 @@ def game_to_dto(game: Game) -> GameDTO:
         id=game.id,
         theme=game.theme,
         started=game.started,
+        owner_id=game.owner_id,
         started_at=game.started_at,
         closed=game.closed,
         companies=[company_to_dto(c) for c in game.companies],

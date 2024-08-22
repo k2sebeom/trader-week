@@ -37,9 +37,9 @@ async def post_new_game(
     if game is not None and datetime.now() - game.created_at < timedelta(minutes=2):
         raise HTTPException(400, "New Game can be only created per minute")
 
-    companies = await game_service.get_companies(theme=req.theme)
+    companies, theme = await game_service.get_companies(theme=req.theme)
     await game_service.create_new_events(companies)
-    game = create_game(db, req.theme, user, companies)
+    game = create_game(db, theme, user, companies)
 
     game.users.append(user)
     db.commit()
