@@ -42,7 +42,7 @@ EVENT_PROMPT = """We're playing stock price games with these companies.
 At each day, we get an event related to each company and stock price change corresponding to the event.
 Events should make a coherent story as a whole.
 There are 7 days max, so make sure that dramatic drop / rise is included within 7 days.
-Make sure 3 out of 5 companies end up going lower than the initial price.
+Make sure 3 out of 5 companies end up going lower than the initial price on day 7.
 
 All response in Korean. Give output in Json Format:"""
 
