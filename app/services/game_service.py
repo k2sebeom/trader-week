@@ -21,7 +21,8 @@ from core.utils.logger import logger
 
 COMPANY_PROMPT = """'Create me 5 imaginary companies with very short descriptions.
 Theme: {theme}
-You can go wild! Come up with some fun concepts! Language: {language}
+You can go wild! Come up with some fun concepts!
+All fields in Language: {language}
 Format should in in JSON:"""
 
 COMPANY_PROMPT_FORMAT = """
@@ -45,7 +46,7 @@ There are 7 days max, so make sure that dramatic drop / rise is included within 
 Make sure 3 out of 5 companies end up going dramatically lower than the initial price on day 7,
 so you should make it very difficult for people to make money in this market.
 
-Language: {language}. Give output in Json Format:"""
+All fields in Language: {language}. Give output in Json Format:"""
 
 EVENT_PROMPT_FORMAT = """
 {

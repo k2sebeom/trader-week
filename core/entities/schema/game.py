@@ -128,8 +128,13 @@ class Trade(Base):
     amount: Mapped[int] = mapped_column()
 
 
-def get_all_games(db: Session) -> List[Game]:
-    return db.query(Game).where(Game.started_at.is_(None)).order_by(Game.created_at.desc()).all()
+def get_all_games(db: Session, language: str) -> List[Game]:
+    return (
+        db.query(Game)
+        .where(Game.started_at.is_(None) & (Game.language == language))
+        .order_by(Game.created_at.desc())
+        .all()
+    )
 
 
 def get_last_game(

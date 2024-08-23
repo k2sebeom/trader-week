@@ -47,8 +47,8 @@ async def post_new_game(
 
 
 @game_router.get("/")
-def get_games(db=Depends(get_db)) -> List[GameDTO]:
-    games = get_all_games(db)
+def get_games(language: str, db=Depends(get_db)) -> List[GameDTO]:
+    games = get_all_games(db, language)
     return [game_to_dto(game) for game in games]
 
 
