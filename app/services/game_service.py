@@ -21,7 +21,7 @@ from core.utils.logger import logger
 
 COMPANY_PROMPT = """'Create me 5 imaginary companies with very short descriptions.
 Theme: {theme}
-You can go wild! Come up with some fun concepts! All response in korean
+You can go wild! Come up with some fun concepts! Language: {language}
 Format should in in JSON:"""
 
 COMPANY_PROMPT_FORMAT = """
@@ -45,7 +45,7 @@ There are 7 days max, so make sure that dramatic drop / rise is included within 
 Make sure 3 out of 5 companies end up going dramatically lower than the initial price on day 7,
 so you should make it very difficult for people to make money in this market.
 
-All response in Korean. Give output in Json Format:"""
+Language: {language}. Give output in Json Format:"""
 
 EVENT_PROMPT_FORMAT = """
 {
@@ -73,14 +73,18 @@ class GameService:
         )
         self.gpt_model = gpt_model
 
-    async def get_companies(self, theme: str) -> Tuple[List[Company], str]:
+    async def get_companies(self, theme: str, language: str) -> Tuple[List[Company], str]:
         logger.info("Creating Companies...")
         resp = await self.openai_client.chat.completions.create(
             model=self.gpt_model,
             messages=[
                 {
                     "role": "user",
-                    "content": COMPANY_PROMPT.format(theme=theme) + COMPANY_PROMPT_FORMAT,
+                    "content": COMPANY_PROMPT.format(
+                        theme=theme,
+                        language=language,
+                    )
+                    + COMPANY_PROMPT_FORMAT,
                 }
             ],
             response_format={"type": "json_object"},
@@ -125,7 +129,7 @@ class GameService:
             files.append(fname)
         return files
 
-    async def create_new_events(self, companies: List[Company]) -> List[Event]:
+    async def create_new_events(self, companies: List[Company], language: str) -> List[Event]:
         companies_prompt = ""
         for c in companies:
             companies_prompt += f"{c.name} ({c.price} Gold): {c.description}\n"
@@ -133,6 +137,7 @@ class GameService:
         event_prompt = (
             EVENT_PROMPT.format(
                 companies=companies_prompt,
+                language=language,
             )
             + EVENT_PROMPT_FORMAT
         )

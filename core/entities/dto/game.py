@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class EventDTO(BaseModel):
@@ -61,6 +61,7 @@ class TradeDTO(BaseModel):
 # Requests
 class CreateGameDTO(BaseModel):
     theme: str
+    language: str = Field(default="en")
 
 
 class TradeReqDTO(BaseModel):

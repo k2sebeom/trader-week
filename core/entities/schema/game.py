@@ -22,6 +22,7 @@ class Game(Base):
     __tablename__ = "games"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    language: Mapped[str] = mapped_column()
 
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id", name="game_owner_id_fkey"), nullable=True)
 
@@ -142,11 +143,13 @@ def create_game(
     theme: str,
     owner: User,
     companies: List[Company],
+    language: str,
 ) -> Game:
     game = Game(
         theme=theme,
         owner_id=owner.id,
         companies=companies,
+        language=language,
     )
     db.add(game)
     db.commit()
