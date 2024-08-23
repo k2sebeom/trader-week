@@ -19,10 +19,7 @@ def make_middleware() -> List[Middleware]:
     middleware = [
         Middleware(
             CORSMiddleware,
-            allow_origins=[
-                "http://localhost:3000",
-                "http://localhost",
-            ],
+            allow_origins=config.allowed_origins,
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],

@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 uvicorn = "*"
 fastapi = "*"
-python-dotenv = "*"
 openai = "*"
 pydantic-settings = "*"
 pillow = "*"
@@ -14,6 +13,7 @@ sqlalchemy = "*"
 psycopg2-binary = "*"
 bcrypt = "*"
 rich = "*"
+pyyaml = "*"
 
 [dev-packages]
 alembic = "*"
@@ -22,6 +22,7 @@ flake8 = "*"
 flake8-pyproject = "*"
 black = "*"
 mypy = "*"
+types-pyyaml = "*"
 
 [requires]
 python_version = "3.10"
