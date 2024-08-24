@@ -206,3 +206,7 @@ def create_trades(
     db.add_all(trades)
     db.commit()
     return trades
+
+
+def get_rankings(db: Session) -> List[User]:
+    return db.query(User).order_by(User.gold.desc()).limit(10).all()

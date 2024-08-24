@@ -6,7 +6,7 @@ from fastapi import Cookie
 from sqlalchemy.orm import Session
 
 from core.entities.schema.db import get_db
-from core.entities.schema.game import get_or_create_user, get_user_by_id
+from core.entities.schema.game import get_or_create_user, get_user_by_id, get_rankings
 from core.entities.dto.user import SignInUserDTO
 from core.entities.dto.game import UserDTO, GameDTO
 from core.entities.dto.convert import user_to_dto, game_to_dto
@@ -43,3 +43,9 @@ async def get_history(
     if user is None:
         raise HTTPException(404, "User not found")
     return [game_to_dto(g) for g in user.games]
+
+
+@user_router.get("/ranking")
+async def get_ranking(db: Session = Depends(get_db)) -> List[UserDTO]:
+    ranking = get_rankings(db)
+    return [user_to_dto(u) for u in ranking]
