@@ -91,6 +91,9 @@ class GameService:
         )
         self.gpt_model = gpt_model
 
+        if not os.path.exists(config.thumbnails_path):
+            os.mkdir(config.thumbnails_path)
+
     async def get_companies(self, theme: str, language: str) -> Tuple[List[Company], str]:
         logger.info("Creating Companies...")
         resp = await self.openai_client.chat.completions.create(
