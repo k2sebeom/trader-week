@@ -15,6 +15,7 @@ class Config(BaseSettings):
     port: int = cfg.get("port", 8080)
 
     openai_key: str = cfg.get("openai_key", "")
+    getimgai_key: str = cfg.get("getimgai_key", "")
 
     database_url: str = cfg.get("database_url", "postgresql://localhost:5432")
 

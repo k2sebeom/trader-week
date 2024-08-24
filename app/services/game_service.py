@@ -6,6 +6,7 @@ from uuid import uuid1
 import base64
 from io import BytesIO
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
@@ -17,7 +18,7 @@ from core.entities.schema.game import Event, Company, Game, User, Trade
 from core.entities.dto.game import TradeReqDTO
 from core.config import config
 from core.utils.logger import logger
-
+from core.utils.getimg import generate_image, GetImgResponse
 
 COMPANY_PROMPT = """'Create me 5 imaginary companies with very short descriptions.
 Theme: {theme}
@@ -31,6 +32,8 @@ COMPANY_PROMPT_FORMAT = """
     "companies": [{
         "name": Name of the company,
         "description": Brief description of the company,
+        "name_en": Same as name, but in English
+        "description_en": Same as description, but in English,
         "price": current stock price in number between 100 ~ 1000
     }]
 }
@@ -59,6 +62,20 @@ EVENT_PROMPT_FORMAT = """
 """
 
 
+class CompanyFormat(BaseModel):
+    name: str
+    description: str
+    price: int
+
+    name_en: str
+    description_en: str
+
+
+class GameFormat(BaseModel):
+    title: str
+    companies: List[CompanyFormat]
+
+
 class GameException(Exception):
     pass
 
@@ -68,7 +85,7 @@ class InvalidTradesException(GameException):
 
 
 class GameService:
-    def __init__(self, gpt_model: ChatModel = "gpt-4o"):
+    def __init__(self, gpt_model: ChatModel = "gpt-4o-mini"):
         self.openai_client = AsyncOpenAI(
             api_key=config.openai_key,
         )
@@ -91,37 +108,36 @@ class GameService:
             response_format={"type": "json_object"},
         )
         data: Dict[str, Any] = json.loads(resp.choices[0].message.content or "{}")
+        game_forms: GameFormat = GameFormat(**data)
+
         companies = [
             Company(
-                name=c["name"],
-                description=c["description"],
-                price=c["price"],
+                name=c.name,
+                description=c.description,
+                price=c.price,
             )
-            for c in data["companies"]
+            for c in game_forms.companies
         ]
         logger.info("Companies Creation Complete")
         logger.info("Creating Thumbnails...")
-        files = await self.get_companies_thumbnail(companies)
+        files = await self.get_companies_thumbnail(game_forms.companies)
         for i in range(len(companies)):
             companies[i].thumbnail = files[i]
         logger.info("Thumbnails creation complete")
         return companies, data.get("title", theme)
 
-    async def get_companies_thumbnail(self, companies: List[Company]):
+    async def get_companies_thumbnail(self, companies: List[CompanyFormat]):
         tasks = []
         for c in companies:
-            task = self.openai_client.images.generate(
-                prompt=f"Create me an image thumbnail for the following company. Name: {c.name}, Desc: {c.description}",
-                model="dall-e-3",
-                size="1024x1024",
-                response_format="b64_json",
+            task = generate_image(
+                f"A thumbnail image for the company. Name: {c.name_en}, Description: {c.description_en}",
             )
             tasks.append(task)
 
-        results = await asyncio.gather(*tasks)
+        results: List[GetImgResponse] = await asyncio.gather(*tasks)
         files = []
         for resp in results:
-            b64_json = resp.data[0].b64_json or ""
+            b64_json = resp.image
             data = base64.b64decode(b64_json)
             img = Image.open(BytesIO(data))
             fname = f"{uuid1()}.jpg"
