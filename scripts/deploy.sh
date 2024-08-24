@@ -34,7 +34,13 @@ ssh $REMOTE_TARGET << EOF
     docker load -i $TAR_FILE
     rm $TAR_FILE
 
-    docker run -p 3000:3000 -v ./configs:/app/configs --rm -d --name $CONTAINER_NAME $IMAGE_NAME
+    mkdir -p thumbnails
+
+    docker run -p 3000:3000 \
+        -v ./configs:/app/configs \
+        -v ./thumbnails:/app/thumbnails \
+        --rm -d --name $CONTAINER_NAME \
+        $IMAGE_NAME
     docker ps
 EOF
 
