@@ -42,7 +42,7 @@ async def get_history(
     user = get_user_by_id(db, user_id)
     if user is None:
         raise HTTPException(404, "User not found")
-    return [game_to_dto(g) for g in user.games]
+    return [game_to_dto(g) for g in filter(lambda g: g.closed, user.games)]
 
 
 @user_router.get("/ranking")
