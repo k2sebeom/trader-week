@@ -28,7 +28,7 @@ Format should in in JSON:"""
 
 COMPANY_PROMPT_FORMAT = """
 {
-    "title": Brief title for the theme you created,
+    "title": Dramatic title for the theme you created,
     "companies": [{
         "name": Name of the company,
         "description": Brief description of the company,
@@ -45,7 +45,7 @@ EVENT_PROMPT = """We're playing stock price games with these companies.
 
 At each day, we get an event related to each company and stock price change corresponding to the event.
 Events should make a coherent story as a whole.
-There are 7 days max, so make sure that dramatic drop / rise is included within 7 days.
+There are 7 days total, so make sure that dramatic drop / rise is included within 7 days.
 Make sure 3 out of 5 companies end up going dramatically lower than the initial price on day 7,
 so you should make it very difficult for people to make money in this market.
 
