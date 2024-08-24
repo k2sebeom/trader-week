@@ -5,14 +5,14 @@ from pydantic_settings import BaseSettings
 import yaml
 
 
-config_path = os.getenv("API_CONFIG_PATH") or "traders.yml"
+config_path = os.getenv("API_CONFIG_PATH") or "./configs/traders.yml"
 with open(config_path, "r") as f:
     cfg: Dict[str, Any] = yaml.safe_load(f)
 
 
 class Config(BaseSettings):
     api_prefix: str = "/api"
-    port: int = cfg.get("port", 8080)
+    port: int = cfg.get("port", 3000)
 
     openai_key: str = cfg.get("openai_key", "")
     getimgai_key: str = cfg.get("getimgai_key", "")
