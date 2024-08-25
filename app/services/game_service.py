@@ -47,6 +47,7 @@ At each day, we get an event related to each company and stock price change corr
 There are 7 days total, so make sure to make prices as dynamic as possible within 7 days.
 Make sure 3 out of 5 companies end up going dramatically lower than the initial price on day 7,
 Your goal is to make the market as unpredictable as possible.
+Even the highest price can go down in one day, and event the low price can get high in one day.
 
 All fields in Language: {language}. Give output in Json Format:"""
 
