@@ -55,7 +55,7 @@ EVENT_PROMPT_FORMAT = """
     "events": [{
         "company": company name,
         "description": What happened,
-        "price": Price change number in percentage (ex. 10, -12, 200),
+        "price": Price change percentage in integer (ex. 10, -12, 200),
     }]
 }
 """
