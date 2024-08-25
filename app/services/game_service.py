@@ -44,10 +44,9 @@ EVENT_PROMPT = """We're playing stock price games with these companies.
 {companies}
 
 At each day, we get an event related to each company and stock price change corresponding to the event.
-Events should make a coherent story as a whole.
-There are 7 days total, so make sure that dramatic drop / rise is included within 7 days.
+There are 7 days total, so make sure to make prices as dynamic as possible within 7 days.
 Make sure 3 out of 5 companies end up going dramatically lower than the initial price on day 7,
-so you should make it very difficult for people to make money in this market.
+Your goal is to make the market as unpredictable as possible.
 
 All fields in Language: {language}. Give output in Json Format:"""
 
