@@ -19,8 +19,14 @@ async def signin_new_user(req: SignInUserDTO, resp: Response, db: Session = Depe
     user = get_or_create_user(db, req.nickname, req.password)
     if user is None:
         raise HTTPException(401, "Password mismatch")
-    resp.set_cookie(key="user_id", value=str(user.id), expires=3600 * 24, httponly=True, secure=True)
+    resp.set_cookie(key="user_id", value=str(user.id), expires=3600 * 24, httponly=True, secure=True, samesite="none")
     return user_to_dto(user)
+
+
+@user_router.get("/signout")
+async def signout_user(resp: Response) -> UserDTO:
+    resp.delete_cookie(key="user_id", secure=True, httponly=True, samesite="none")
+    return "Signed out"
 
 
 @user_router.get("/me")
