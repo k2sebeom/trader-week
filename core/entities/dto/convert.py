@@ -1,5 +1,7 @@
-from core.entities.schema.game import Game, Trade, Company, User
+from core.entities.schema.game import Game, Trade, Company, User, Event
 from core.entities.dto.game import GameDTO, TradeDTO, CompanyDTO, EventDTO, UserDTO, ParticipantDTO
+
+from datetime import datetime
 
 
 def user_to_dto(user: User) -> UserDTO:
@@ -19,6 +21,16 @@ def user_to_participant(user: User, game: Game) -> ParticipantDTO:
     )
 
 
+def event_to_dto(e: Event) -> EventDTO:
+    return EventDTO(
+        id=e.id,
+        description=e.description,
+        price=e.price,
+        happen_at=e.happen_at,
+        ms_left=max(int((e.happen_at - datetime.now()).total_seconds() * 1000), 0),
+    )
+
+
 def company_to_dto(company: Company) -> CompanyDTO:
     price_history = company.prices
     return CompanyDTO(
@@ -28,15 +40,7 @@ def company_to_dto(company: Company) -> CompanyDTO:
         price=price_history[-1],
         history=price_history,
         thumbnail=company.thumbnail,
-        events=[
-            EventDTO(
-                id=e.id,
-                description=e.description,
-                price=e.price,
-                happen_at=e.happen_at,
-            )
-            for e in company.filtered_events
-        ],
+        events=[event_to_dto(e) for e in company.filtered_events],
     )
 
 

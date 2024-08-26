@@ -9,6 +9,7 @@ class EventDTO(BaseModel):
     description: str
     price: int
     happen_at: datetime
+    ms_left: int
 
 
 class CompanyDTO(BaseModel):
