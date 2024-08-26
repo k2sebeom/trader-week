@@ -13,6 +13,7 @@ from openai.types.chat import ChatCompletionMessageParam
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionAssistantMessageParam
 from openai.types.chat_model import ChatModel
 from PIL import Image
+from pytz import utc
 
 from core.entities.schema.game import Event, Company, Game, User, Trade
 from core.entities.dto.game import TradeReqDTO
@@ -180,7 +181,7 @@ class GameService:
                     company_id=companies[i].id,
                     description=e["description"],
                     price=e["price"],
-                    happen_at=datetime.now(),
+                    happen_at=datetime.now(utc),
                 )
                 events.append(new_event)
                 companies[i].events.append(new_event)
@@ -190,7 +191,7 @@ class GameService:
         return events
 
     def start_game(self, game: Game):
-        now = datetime.now()
+        now = datetime.now(utc)
         game.started_at = now
         for c in game.companies:
             for i, e in enumerate(c.events):

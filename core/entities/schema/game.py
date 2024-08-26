@@ -6,6 +6,7 @@ import bcrypt
 
 from core.entities.schema.db import Base
 from datetime import datetime, timedelta
+from pytz import utc
 
 INITIAL_GOLD = 10_000
 
@@ -72,7 +73,7 @@ class Company(Base):
     def filtered_events(self) -> List["Event"]:
         if not self.game.started:
             return []
-        now = datetime.now()
+        now = datetime.now(utc)
         return list(filter(lambda e: (e.happen_at - now) < timedelta(seconds=0), self.events))
 
     @property

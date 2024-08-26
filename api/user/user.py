@@ -24,7 +24,7 @@ async def signin_new_user(req: SignInUserDTO, resp: Response, db: Session = Depe
 
 
 @user_router.get("/signout")
-async def signout_user(resp: Response) -> UserDTO:
+async def signout_user(resp: Response):
     resp.delete_cookie(key="user_id", secure=True, httponly=True, samesite="none")
     return "Signed out"
 

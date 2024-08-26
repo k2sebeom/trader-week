@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pytz import utc
 from typing import Annotated, Union, List
 
 from fastapi import APIRouter, Depends, HTTPException, Cookie
@@ -34,7 +35,7 @@ async def post_new_game(
         raise HTTPException(401, "Not signed in")
 
     game = get_last_game(db)
-    if game is not None and datetime.now() - game.created_at < timedelta(minutes=2):
+    if game is not None and datetime.now(utc) - game.created_at < timedelta(minutes=2):
         raise HTTPException(400, "New Game can be only created per minute")
 
     companies, theme = await game_service.get_companies(theme=req.theme, language=req.language)
@@ -146,7 +147,7 @@ async def make_trade(
     if game.started_at is None or user_id not in [u.id for u in game.users]:
         raise HTTPException(403, "Not allowed to make trade in this game")
 
-    if datetime.now() - game.started_at > timedelta(minutes=2 * 8):
+    if datetime.now(utc) - game.started_at > timedelta(minutes=2 * 8):
         raise HTTPException(403, "Market closed")
 
     try:
