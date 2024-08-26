@@ -1,7 +1,8 @@
 from typing import List, Optional, Dict
 
-from sqlalchemy import String, ForeignKey, exists, Table, Column
+from sqlalchemy import String, ForeignKey, exists, Table, Column, DateTime
 from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 import bcrypt
 
 from core.entities.schema.db import Base
@@ -36,8 +37,8 @@ class Game(Base):
     )
     trades: Mapped[List["Trade"]] = relationship()
 
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-    started_at: Mapped[datetime] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     @property
     def started(self) -> bool:
@@ -95,7 +96,7 @@ class Event(Base):
     description: Mapped[str] = mapped_column()
     price: Mapped[int] = mapped_column()
 
-    happen_at: Mapped[datetime] = mapped_column()
+    happen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     company: Mapped["Company"] = relationship(back_populates="events")
