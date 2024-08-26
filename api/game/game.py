@@ -121,6 +121,9 @@ async def leave_game(
     if game is None:
         raise HTTPException(404, f"Game with id {id} not found")
 
+    if game.started:
+        raise HTTPException(403, "Cannot leave a started game")
+
     # If owner is leaving
     game.users.remove(user)
     if game.owner_id == user.id:
